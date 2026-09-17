@@ -2,6 +2,18 @@
 
 **Time:** 3 hours. Start whenever suits you, work in one sitting if you can, and submit what you have when the 3 hours are up. If you go over, that is not disqualifying, but say so in the report, with roughly how long you spent and what you would have cut. We are far more interested in how you reason and iterate than in how much you ship. Two well-measured iterations with an honest error analysis beat five features with no numbers.
 
+### Deliverables at a glance
+
+By the end you hand in one private Git repository containing:
+
+1. `run.py` — extracts defendants from a JSONL file with the OpenAI API and writes `predictions.jsonl` (schema below).
+2. `evaluate.py` — scores a predictions file against `data/dev.jsonl` and prints per-document and aggregate precision, recall and F1.
+3. `predictions.jsonl` — the output of your final `run.py` over `data/eval.jsonl`. This is what we score.
+4. `REPORT.md` — one to two pages: what you tried, in what order, what the numbers were, what broke, what you would do next.
+5. `README.md` — setup and the exact commands to reproduce 2 and 3 in under five minutes.
+
+Everything below explains those five items. If something is ambiguous, make a call, write it in the report, and move on.
+
 ### Context
 
 Darrow scans public court filings to surface legal exposure. One of the first structured signals we need from every complaint is: **who is being sued?** The answer sounds trivial and is not. Defendant names in complaints arrive as OCR'd text with inconsistent formatting, legal designators (Inc., LLC, L.P.), trade-name qualifiers (d/b/a, f/k/a), placeholder parties ("Does 1 through 50"), individuals sued alongside their companies, and parent or affiliate companies that are described but not actually sued.
@@ -53,12 +65,15 @@ Things to know about this data, because they are true in production too:
 
 A two-line example is in `examples/predictions.example.jsonl`. You may add fields. Two we care about in production, and treat as stretch goals: `us_state_of_registration` (from statements like "a Delaware corporation") and a `name_quality` flag for OCR-corrupted or placeholder names.
 
-The contract we will run:
+The contract we will run, exactly as written:
 
 ```bash
+python run.py --input data/dev.jsonl  --output dev_predictions.jsonl
+python evaluate.py --predictions dev_predictions.jsonl --gold data/dev.jsonl
 python run.py --input data/eval.jsonl --output predictions.jsonl
-python evaluate.py --predictions predictions.jsonl --gold data/dev.jsonl
 ```
+
+`evaluate.py` scores whatever predictions file it is given against the dev labels. `predictions.jsonl` from the third command is the file you commit and the one we score.
 
 **2. An evaluation.** A script that scores predictions against labels and prints per-document and aggregate precision, recall and F1. You define the matching semantics and the aggregation. Write down why.
 
@@ -94,5 +109,3 @@ A private Git repository (GitHub or GitLab) shared with the account we give you,
 - `REPORT.md`.
 
 We will schedule a 45-minute session to walk through your iterations together.
-
----
