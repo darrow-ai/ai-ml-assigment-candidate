@@ -104,7 +104,7 @@ Also cover: how you decided what to measure and how, what you chose not to build
 
 A private Git repository (GitHub or GitLab) shared with the account we give you, containing:
 
-- the code, with a `README.md` covering setup and the two commands above,
+- the code, with a `README.md` covering setup and the commands above,
 - `predictions.jsonl` from your final run over `eval.jsonl`,
 - `REPORT.md`.
 
