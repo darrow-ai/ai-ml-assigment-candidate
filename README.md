@@ -18,7 +18,7 @@ Everything below explains those five items. If something is ambiguous, make a ca
 
 Darrow scans public court filings to surface legal exposure. One of the first structured signals we need from every complaint is: **who is being sued?** The answer sounds trivial and is not. Defendant names in complaints arrive as OCR'd text with inconsistent formatting, legal designators (Inc., LLC, L.P.), trade-name qualifiers (d/b/a, f/k/a), placeholder parties ("Does 1 through 50"), individuals sued alongside their companies, and parent or affiliate companies that are described but not actually sued.
 
-Your task is to build a lean, working version of this extraction, evaluate it, and iterate on it.
+Your task is to build a lean, working version of this extraction, evaluate it, and iterate on it. We need the defendants only. A complaint mentions many other companies along the way, and none of those is what we are after.
 
 ### Data you receive
 
