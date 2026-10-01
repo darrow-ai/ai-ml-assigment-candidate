@@ -6,7 +6,7 @@
 
 By the end you hand in one private Git repository containing:
 
-1. `run.py` — extracts defendants from a JSONL file with the OpenAI API and writes `predictions.jsonl` (schema below).
+1. `run.py` — extracts defendants from a JSONL file with an LLM and writes `predictions.jsonl` (schema below).
 2. `evaluate.py` — scores a predictions file against `data/dev.jsonl` and prints per-document and aggregate precision, recall and F1.
 3. `predictions.jsonl` — the output of your final `run.py` over `data/eval.jsonl`. This is what we score.
 4. `REPORT.md` — one to two pages: what you tried, in what order, what the numbers were, what broke, what you would do next.
@@ -47,7 +47,7 @@ Things to know about this data, because they are true in production too:
 
 ### What to build
 
-**1. An extraction pipeline.** A command-line program that reads a JSONL file, runs an LLM-based extraction over every document using the OpenAI API, and writes `predictions.jsonl`. Python preferred. For each document, output at minimum:
+**1. An extraction pipeline.** A command-line program that reads a JSONL file, runs an LLM-based extraction over every document using the key we provide (see **LLM access** below), and writes `predictions.jsonl`. Python preferred. For each document, output at minimum:
 
 ```json
 {
@@ -96,7 +96,62 @@ Also cover: how you decided what to measure and how, what you chose not to build
 
 ### Practicalities
 
-- **LLM access.** We provide an OpenAI API key with a $20 spending cap. Any OpenAI model is fine. A run over 55 short documents costs well under a dollar on a small model, so the cap is not a constraint you should feel. If you hit it, tell us; do not switch to a personal key.
+- **LLM access.** We send you a **Portkey** key with a $20 spending cap, separately from this repository (by email or chat). It is deliberately not in the repo, and it should not end up in yours either: read it from an environment variable, never commit it, and do not paste it into your report. Portkey is an AI gateway that sits in front of the model providers, so the key is not a raw OpenAI key and will not work against `api.openai.com`. Point your client at the gateway instead, as shown below. Any OpenAI model is fine. A run over 55 short documents costs well under a dollar on a small model, so the cap is not a constraint you should feel. If you hit it, tell us; do not switch to a personal key.
+
+  Two things to know before the examples:
+
+  - **Base URL:** `https://api.portkey.ai/v1`. The gateway speaks the OpenAI API, so any OpenAI-compatible client works unchanged.
+  - **Model string:** we send the exact model identifier to use along with the key. The examples below use `gpt-4.1-mini` as a stand-in; use the one we send you.
+
+  **Option A, the vendor SDK with a custom base URL.** Nothing extra to install, and the one we suggest if you have no reason to prefer the other.
+
+  ```python
+  import os
+  from openai import OpenAI
+
+  client = OpenAI(
+      api_key=os.environ["PORTKEY_API_KEY"],      # the key we sent you
+      base_url="https://api.portkey.ai/v1",
+  )
+
+  response = client.chat.completions.create(
+      model="gpt-4.1-mini",
+      messages=[{"role": "user", "content": "Hello"}],
+  )
+  print(response.choices[0].message.content)
+  ```
+
+  The OpenAI SDK also reads `OPENAI_API_KEY` and `OPENAI_BASE_URL` from the environment, so this is equivalent and keeps the key out of your code:
+
+  ```bash
+  export OPENAI_API_KEY=<the key we sent you>
+  export OPENAI_BASE_URL=https://api.portkey.ai/v1
+  ```
+
+  The same applies to any other client: set the base URL and send the key as a bearer token.
+
+  ```bash
+  curl https://api.portkey.ai/v1/chat/completions \
+    -H "Authorization: Bearer $PORTKEY_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Hello"}]}'
+  ```
+
+  **Option B, the Portkey SDK.** `pip install portkey-ai`. Same calls, and you get the gateway's own features (retries, fallbacks, caching, tracing) without wiring them yourself.
+
+  ```python
+  import os
+  from portkey_ai import Portkey
+
+  client = Portkey(api_key=os.environ["PORTKEY_API_KEY"])
+
+  response = client.chat.completions.create(
+      model="gpt-4.1-mini",
+      messages=[{"role": "user", "content": "Hello"}],
+  )
+  ```
+
+  Either option is fine and neither earns or loses points. Whichever you pick, say in your README which one you used and which environment variables your code expects, so we can run it with our own key.
 - **No infrastructure.** No Docker, no orchestrator, no UI. A repo with a README that gets us from clone to `evaluate.py` output in under five minutes is the target.
 - **AI coding assistants** are allowed and expected. Ownership of the result is yours: be ready to explain and defend every line.
 
@@ -107,3 +162,5 @@ A private Git repository (GitHub or GitLab), Zip file, containing:
 - the code, with a `README.md` covering setup and the commands above,
 - `predictions.jsonl` from your final run over `eval.jsonl`,
 - `REPORT.md`.
+
+Do not include the key, or any file containing it, in what you send us.
